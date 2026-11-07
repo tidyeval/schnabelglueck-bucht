@@ -1,6 +1,7 @@
+import { STAGES } from './stages.js';
 import { WORLD, clamp, netShape, playerTilt, terrainBlocks, airState, pufferRadius, LEAP } from './game.js';
 import { blink, cuteEye, happyEye, star, drawResidents, roofCat } from './cute.js';
-import { THEMES, drawSky, drawWater, drawCaustics, drawWhale, drawDolphins, drawBaitball, drawCurrent, drawJuice, swellOf, drawRare } from './scenery.js';
+import { drawSky, drawWater, drawCaustics, drawWhale, drawDolphins, drawBaitball, drawCurrent, drawJuice, swellOf, drawRare } from './scenery.js';
 const TAU = Math.PI * 2;
 function ellipse(c, x, y, rx, ry, fill, rotation = 0) {
   c.beginPath(); c.ellipse(x, y, rx, ry, rotation, 0, TAU); c.fillStyle = fill; c.fill();
@@ -75,7 +76,10 @@ function pelicanWing(c, lift, fold, back) {
   for(let i=0;i<3;i++) path(c,null,p=>{p.moveTo(elbow+8,ey+3+i*2);p.quadraticCurveTo(tip+25,ty+7+i*3,tip+9+i*6,ty+6+i*5)},'#b7cbb2',1);
   c.restore();
 }
-export function pelican(c, x, y, scale, t, tilt = 0, outfit = 'classic', wet = false, happy = false, gulp = 0, breach = 0, cargo = 0, breath = WORLD.breath, reducedMotion = false, expression = {}) {
+export function pelican(c, {
+  x, y, scale, time: t, tilt = 0, outfit = 'classic', wet = false, happy = false,
+  gulp = 0, breach = 0, cargo = 0, breath = WORLD.breath, reducedMotion = false, expression = {},
+}) {
   const confused = expression.confused || 0;
   c.save(); c.translate(x, y); c.rotate(tilt + (reducedMotion ? 0 : Math.sin(confused * 18) * .28 * Math.min(1, confused))); c.scale(scale, scale);
   // Squash on splashdown, stretch along the flight path when moving fast.
@@ -377,7 +381,7 @@ function mangrove(c, item, water, t, night) {
 // Every stage has its own spot for the nest: a grassy islet, a harbour piling,
 // a mangrove crown (where real brown pelicans nest) or a moonlit rock.
 function nestBase(c, x, water, stage, t) {
-  if (stage === 1) {
+  if (STAGES[stage].id === 'harbor') {
     for (const [dx, h] of [[-38, 30], [-6, 40], [26, 34]]) {
       path(c, gradient(c, water - h, water + 60, '#a8805c', '#5e4a3a'), p => p.roundRect(x + dx, water - h, 18, h + 60, 4), '#5a4434', 1.2);
       ellipse(c, x + dx + 9, water - h, 9, 3, '#c49a72');
@@ -385,12 +389,12 @@ function nestBase(c, x, water, stage, t) {
     }
     path(c, null, p => { p.moveTo(x - 30, water - 18); p.quadraticCurveTo(x - 10, water - 8, x + 34, water - 16); }, '#e8d9b0', 2.2);
     ellipse(c, x + 52, water - 2, 10, 4, '#e9f5df66');
-  } else if (stage === 2) {
+  } else if (STAGES[stage].id === 'lagoon') {
     for (let i = 0; i < 5; i++) { const u = i / 4, foot = x - 58 + u * 116; path(c, null, p => { p.moveTo(x + (u - .5) * 20, water - 20); p.quadraticCurveTo(foot, water - 18, foot, water + 6); }, '#8b6b52', 4); }
     for (const [dx, dy, r] of [[-48, -22, 22], [-22, -34, 26], [10, -36, 28], [40, -26, 23], [-4, -18, 26]]) ellipse(c, x + dx, water + dy, r, r * .62, '#4f8a5a');
     for (const [dx, dy, r] of [[-46, -26, 18], [-20, -38, 22], [12, -40, 23], [42, -30, 19]]) ellipse(c, x + dx, water + dy, r, r * .55, '#69a764');
     for (const [dx, dy] of [[-28, -46], [16, -48], [44, -36]]) ellipse(c, x + dx, water + dy, 8, 3, '#f3d08a88');
-  } else if (stage === 3) {
+  } else if (STAGES[stage].id === 'reef') {
     path(c, gradient(c, water - 40, water + 10, '#4a6a8c', '#22405e'), p => { p.moveTo(x - 64, water + 8); p.quadraticCurveTo(x - 58, water - 30, x - 26, water - 38); p.quadraticCurveTo(x + 6, water - 50, x + 36, water - 36); p.quadraticCurveTo(x + 60, water - 24, x + 66, water + 8); p.closePath(); }, '#1b3450', 1.2);
     ellipse(c, x - 20, water - 40, 18, 4, '#9fb8e044');
     for (const [dx, col] of [[-50, '#e48aa8'], [48, '#f2b06a']]) for (let k = -1; k <= 1; k++) path(c, null, p => { p.moveTo(x + dx, water - 2); p.quadraticCurveTo(x + dx + k * 8, water - 12, x + dx + k * 6, water - 20 + Math.abs(k) * 4); }, col, 3);
@@ -398,13 +402,14 @@ function nestBase(c, x, water, stage, t) {
     path(c, '#829c83', p => { p.moveTo(x - 62, water + 7); p.quadraticCurveTo(x - 53, water - 22, x - 33, water - 34); p.quadraticCurveTo(x, water - 48, x + 32, water - 36); p.quadraticCurveTo(x + 53, water - 20, x + 65, water + 7); p.closePath(); }, '#607a69', 1.2);
   }
 }
+/** @param {Readonly<import('./game.js').GameState>} game Simulation state; drawing must not mutate it. */
 export function drawWorld(c, game, mode, t, outfit, effects, reducedMotion = false, fx = null) {
   const menu = mode === 'menu';
   const water = menu ? 466 : WORLD.water;
   const d = menu ? (reducedMotion ? 0 : t * 12) : game.distance;
   const motion = reducedMotion ? 0 : t;
   c.clearRect(0, 0, 480, 850);
-  const stage = menu ? 0 : game.stage, theme = THEMES[stage], night = stage === 3;
+  const stage = menu ? 0 : game.stage, theme = STAGES[stage].theme, night = STAGES[stage].night;
   c.save();
   if (fx && (fx.shakeX || fx.shakeY)) { c.translate(240 + fx.shakeX, 425 + fx.shakeY); c.scale(1.03, 1.03); c.translate(-240, -425); }
   drawSky(c, stage, water, d, motion, menu ? null : game, reducedMotion, () => {
@@ -412,7 +417,7 @@ export function drawWorld(c, game, mode, t, outfit, effects, reducedMotion = fal
     island(c, 24 - d * .055 % 780, water - 6, motion);
     island(c, 805 - d * .055 % 780, water - 6, motion);
     c.save(); c.translate(415, water - 1); c.scale(.5, .5); path(c, '#e5d3aa', p => { p.moveTo(-80, 0); p.quadraticCurveTo(-15, -31, 69, 0); }); palm(c, 0, -6, .8, motion); palm(c, -23, -5, .53, motion); c.restore();
-    if (stage === 1) {
+    if (STAGES[stage].id === 'harbor') {
       for (let i = 0; i < 6; i++) {
         const x = ((i * 115 - d * .12) % 760 + 760) % 760 - 140;
         path(c, '#89aaa0', p => { p.rect(x, water - 50, 65, 43); p.moveTo(x - 5, water - 50); p.lineTo(x + 30, water - 74); p.lineTo(x + 70, water - 50); });
@@ -421,7 +426,7 @@ export function drawWorld(c, game, mode, t, outfit, effects, reducedMotion = fal
         if (!menu && game.decor?.residents.includes('cat') && i === game.decor.catHouse) roofCat(c, x + 50, water - 54, motion);
       }
     }
-    if (stage === 2) {
+    if (STAGES[stage].id === 'lagoon') {
       // Far mangrove islands: soft crowns on thin stilts.
       for (let i = 0; i < 5; i++) {
         const x = ((i * 157 - d * .07) % 780 + 780) % 780 - 150, w = 30 + (i % 3) * 10;
@@ -434,7 +439,7 @@ export function drawWorld(c, game, mode, t, outfit, effects, reducedMotion = fal
   });
   drawWater(c, stage, water, d, motion, menu ? null : game, reducedMotion);
   if (!menu) { drawWhale(c, game, motion, reducedMotion); drawDolphins(c, game, water, motion, reducedMotion); drawRare(c, game, water, motion, reducedMotion); }
-  if (!menu && game.stage === 3) {
+  if (!menu && STAGES[game.stage].id === 'reef') {
     for (let i = 0; i < 9; i++) {
       const x = ((i * 79 - d * .22) % 650 + 650) % 650 - 80;
       for (let j = -1; j <= 1; j++) path(c, null, p => { p.moveTo(x, 824); p.quadraticCurveTo(x + j * 30, 800, x + j * 24 + Math.sin(motion + i) * 2, 730 + Math.abs(j) * 17); }, i % 2 ? '#c59191' : '#b5a0b9', 8);
@@ -487,7 +492,11 @@ export function drawWorld(c, game, mode, t, outfit, effects, reducedMotion = fal
       c.globalAlpha = 1 - u; ellipse(c, fx, fy, 5, 2, '#fffaf0', Math.sin(u * 7 + i)); c.globalAlpha = 1;
     }
     if (yawn > .5) { c.globalAlpha = (yawn - .5) * 2; c.fillStyle = '#7a8a9a'; c.font = "bold 14px 'Trebuchet MS'"; c.fillText('z', 300 + yawn * 6, y - 96 - yawn * 10); c.globalAlpha = 1; }
-    pelican(c, 217, y, 1.55, motion, -.06, outfit, false, hop < 0 || (hearts > 0 && hearts < .7), gulp, 0, 0, WORLD.breath, reducedMotion, { look, wink, yawn, shiver });
+    pelican(c, {
+      x: 217, y, scale: 1.55, time: motion, tilt: -.06, outfit,
+      happy: hop < 0 || (hearts > 0 && hearts < .7), gulp, reducedMotion,
+      expression: { look, wink, yawn, shiver },
+    });
   } else {
     for (const item of game.items) {
       if (item.kind === 'buoy') {
@@ -651,7 +660,20 @@ export function drawWorld(c, game, mode, t, outfit, effects, reducedMotion = fal
     }
     const p = game.player;
     c.save();
-    pelican(c, p.feedX ?? p.x, p.y, .76, motion, game.feeding ? -.12 + Math.sin(motion * 10) * .06 : playerTilt(p), outfit, p.wet, game.feeding > 0 || p.gulp > .1 || fx?.joy > 0, game.feeding ? .2 : p.gulp, p.breach, game.cargo, p.breath, reducedMotion, { energy: game.energy, hurt: p.hurt, relief: p.relief, bump: p.bump, confused: p.confused, kick: p.kick, squash: fx?.squash, stretch: game.feeding ? 0 : clamp(Math.abs(p.vy) / 3400, 0, .1), sparkle: fx?.sparkle, shiver: fx?.shiver, fish: game.items.find(i => i.kind === 'fish' && i.x > p.x + 30 && i.x < p.x + 140), nest: game.feeding || game.settling || game.items.some(i => i.kind === 'nest' && Math.abs(i.x - p.x) < 260) }); c.restore();
+    pelican(c, {
+      x: p.feedX ?? p.x, y: p.y, scale: .76, time: motion,
+      tilt: game.feeding ? -.12 + Math.sin(motion * 10) * .06 : playerTilt(p),
+      outfit, wet: p.wet, happy: game.feeding > 0 || p.gulp > .1 || fx?.joy > 0,
+      gulp: game.feeding ? .2 : p.gulp, breach: p.breach, cargo: game.cargo, breath: p.breath, reducedMotion,
+      expression: {
+        energy: game.energy, hurt: p.hurt, relief: p.relief, bump: p.bump, confused: p.confused, kick: p.kick,
+        squash: fx?.squash, stretch: game.feeding ? 0 : clamp(Math.abs(p.vy) / 3400, 0, .1),
+        sparkle: fx?.sparkle, shiver: fx?.shiver,
+        fish: game.items.find(i => i.kind === 'fish' && i.x > p.x + 30 && i.x < p.x + 140),
+        nest: game.feeding || game.settling || game.items.some(i => i.kind === 'nest' && Math.abs(i.x - p.x) < 260),
+      },
+    });
+    c.restore();
   }
   const swell = menu ? 1 : swellOf(game, stage, reducedMotion);
   for (let i = 0; i < 4; i++) {
@@ -661,7 +683,7 @@ export function drawWorld(c, game, mode, t, outfit, effects, reducedMotion = fal
     const x = ((i * 77 - d * .5) % 540 + 540) % 540 - 30, glint = Math.max(0, Math.sin(motion * 2.4 + i * 1.9));
     c.globalAlpha = glint * .8; path(c, night ? '#eef3ff' : '#fffbe0', p => p.ellipse(x, water + Math.sin(x * .025 + motion * 1.6) * 3 * swell, 5 + glint * 5, 1.3, 0, 0, TAU)); c.globalAlpha = 1;
   }
-  if (stage === 2 && !menu) {
+  if (STAGES[stage].id === 'lagoon' && !menu) {
     c.globalCompositeOperation = 'lighter';
     for (let i = 0; i < 6; i++) {
       const x = ((i * 61 + Math.sin(motion * .4 + i) * 30 - d * .3) % 540 + 540) % 540 - 30, y = water - 28 - (i * 37) % 110 + Math.sin(motion * .9 + i * 2) * 10;

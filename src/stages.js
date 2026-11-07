@@ -1,0 +1,63 @@
+// Order is journey progression and the layout-4 save index; keep it stable for existing saves.
+export const STAGES = [
+  {
+    id: 'bay',
+    names: { de: 'Geschützte Bucht', en: 'Sheltered Bay', es: 'Bahía protegida' },
+    startElapsed: 0, sharkWarning: .95, night: false,
+    encounters: ['turtle', 'shark', 'gull', 'boat', 'shark-shark', 'turtle-turtle-gull', 'jelly', 'buoy', 'shark-shark', 'boat-jelly', 'shark-turtle', 'island'],
+    pairPatterns: { 4: 'staggered', 8: 'staggered' },
+    residents: ['crab', 'starfish', 'bottle'],
+    setPieces: { calm: ['baitball', 'current', 'dolphins'], shows: ['rainbow', 'whale'], count: 1 },
+    rareMoment: 'hatchlings',
+    theme: {
+      sky: [[0, '#a9dbe0'], [.6, '#d9ecd9'], [1, '#f7e9c6']], glow: '#efb68a3d', far: '#9cc7bd', tint: null,
+      water: ['#6fc4b6', '#256068'], surface: '#f8dfad40', rays: '#fbf8c4', rayAlpha: .13, mote: '#e8f3cc35',
+      seabed: '#578c81', grass: ['#6b9d7b', '#3f7e6c'], rocks: '#3f7c78', swell: 1,
+    },
+  },
+  {
+    id: 'harbor',
+    names: { de: 'Fischerhafen', en: 'Fishing Harbor', es: 'Puerto pesquero' },
+    startElapsed: 50, sharkWarning: .8, night: false,
+    encounters: ['coral', 'shark', 'driftwood', 'shark-shark', 'turtle-turtle-gull', 'surfer', 'shark-shark', 'diver', 'reef', 'shark-shark', 'turtle-turtle-gull', 'buoy-coral-shark'],
+    pairPatterns: { 3: 'staggered', 6: 'parallel', 9: 'staggered' },
+    residents: ['crab', 'cat', 'bottle'],
+    setPieces: { calm: ['baitball', 'current', 'dolphins'], shows: ['goldenHour', 'trawler', 'rainbow', 'whale'], count: 2 },
+    rareMoment: 'otters',
+    theme: {
+      sky: [[0, '#acdbe0'], [.6, '#f1e7c8'], [1, '#fbdcae']], glow: '#f7b77a55', far: '#a9c4b2', tint: null,
+      water: ['#6fc4b6', '#256068'], surface: '#f8dfad4a', rays: '#fbf2c0', rayAlpha: .13, mote: '#f3eccc35',
+      seabed: '#578c81', grass: ['#6b9d7b', '#3f7e6c'], rocks: '#3f7c78', swell: 1.2,
+    },
+  },
+  {
+    id: 'lagoon',
+    names: { de: 'Mangroven-Lagune', en: 'Mangrove Lagoon', es: 'Laguna de manglares' },
+    startElapsed: 95, sharkWarning: .74, night: false,
+    encounters: ['mangrove', 'shark', 'turtle-turtle-gull', 'driftwood', 'shark-shark', 'mangrove', 'jelly', 'shark-shark', 'turtle-turtle-gull', 'whirlpool', 'shark-shark', 'mangrove'],
+    pairPatterns: { 4: 'staggered', 7: 'staggered', 10: 'parallel' },
+    residents: ['flamingo', 'mudskipper', 'fiddler', 'manatee'],
+    setPieces: { calm: ['baitball', 'current', 'dolphins'], shows: ['rainbow', 'whale'], count: 1 },
+    rareMoment: 'manateeCalf',
+    theme: {
+      sky: [[0, '#9cc4d4'], [.45, '#f1c9b4'], [.8, '#f7ab8c'], [1, '#ffd29a']], glow: '#ff9e6a66', far: '#7f9e86', tint: 'rgba(255,160,110,.1)',
+      water: ['#79bc9c', '#285c52'], surface: '#ffd09a55', rays: '#ffdcaa', rayAlpha: .12, mote: '#f8e4b035',
+      seabed: '#6b8a64', grass: ['#7aa66a', '#4a7d55'], rocks: '#4a705c', swell: .8,
+    },
+  },
+  {
+    id: 'reef',
+    names: { de: 'Korallenriff', en: 'Coral Reef', es: 'Arrecife de coral' },
+    startElapsed: 140, sharkWarning: .68, night: true,
+    encounters: ['puffer', 'shark-shark', 'turtle-turtle-gull', 'whirlpool', 'shark-shark', 'reef-puffer-shark', 'shark-shark', 'turtle-turtle-gull', 'buoy-coral-shark', 'shark-shark', 'boat-jelly-shark', 'shark-shark'],
+    pairPatterns: { 1: 'parallel', 4: 'staggered', 6: 'parallel', 9: 'staggered', 11: 'parallel' },
+    residents: ['octopus', 'seahorse', 'starfish'],
+    setPieces: { calm: ['baitball', 'current', 'dolphins'], shows: ['shootingStars', 'whale'], count: 2 },
+    rareMoment: 'manta',
+    theme: {
+      sky: [[0, '#151b47'], [.5, '#3a3672'], [.85, '#8b5f8c'], [1, '#e09a86']], glow: '#ff9f8a44', far: '#2b2d5e', tint: 'rgba(24,30,78,.62)',
+      water: ['#3b8fa6', '#10294a'], surface: '#cfe0ff3a', rays: '#bcd8ff', rayAlpha: .07, mote: '#bfe9ff30',
+      seabed: '#2f5f73', grass: ['#3f8a86', '#235a66'], rocks: '#173a56', swell: 1.1,
+    },
+  },
+];

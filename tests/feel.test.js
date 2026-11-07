@@ -1,6 +1,7 @@
+import { STAGES } from '../src/stages.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGame, step, WORLD, FRENZY, NEAR_MISS, SET_PIECE_POOLS, rollSetPieces, rollDecor, STAGES, sardinePositions, beakPosition, paceAt, hitsTerrain } from '../src/game.js';
+import { createGame, step, WORLD, FRENZY, NEAR_MISS, rollSetPieces, rollDecor, sardinePositions, beakPosition, paceAt, hitsTerrain } from '../src/game.js';
 
 const quiet = stage => { const g = createGame(() => .5, stage); g.items = []; g.nextEncounter = Infinity; return g; };
 const run = (g, seconds, holding, each) => { const events = []; for (let t = 0; t < seconds && !g.ended; t += 1 / 60) { events.push(...step(g, 1 / 60, typeof holding === 'function' ? holding(g) : holding)); each?.(g); } return events; };
@@ -84,7 +85,7 @@ test('every run rolls its own set pieces, always on safe waves and never overlap
   for (let stage = 0; stage < STAGES.length; stage++) {
     const layouts = new Set();
     for (let run = 0; run < 200; run++) {
-      const pieces = rollSetPieces(stage, random), pool = SET_PIECE_POOLS[stage];
+      const pieces = rollSetPieces(stage, random), pool = STAGES[stage].setPieces;
       layouts.add(JSON.stringify([...pieces].sort()));
       for (const [wave, piece] of pieces) {
         assert.ok(STAGES[stage].encounters[wave], `${stage}:${wave}`);

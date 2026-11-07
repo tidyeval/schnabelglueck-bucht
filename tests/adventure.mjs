@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { routeController } from './route-controller.js';
+import { STAGES } from '../src/stages.js';
 import { createGame, step, press, WORLD } from '../src/game.js';
 const out='test-results/adventure/continuous'; await mkdir(out,{recursive:true});
 async function serveBuild() {
@@ -29,7 +30,7 @@ function route(stage) {
   }
   assert.equal(g.endReason,'complete'); journeyTime += g.time; return inputs;
 }
-const traces=[0,1,2].map(route);await writeFile(`${out}/routes.json`,JSON.stringify(traces));
+const traces=STAGES.map((_, stage) => route(stage));await writeFile(`${out}/routes.json`,JSON.stringify(traces));
 for(const [name,engine] of [['chromium',chromium],['webkit',webkit]].filter(([name])=>!process.env.BROWSER||process.env.BROWSER===name)) {
   const server=await serveBuild(),url=server.url;
   const browser=await engine.launch();const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true,reducedMotion:'reduce'});
@@ -38,7 +39,7 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]].filter(([na
   await page.goto(url);await page.locator('#stages option').first().waitFor({state:'attached'});
   await page.evaluate(()=>localStorage.setItem('pelican-v1',JSON.stringify({record:987,totalFish:100,outfit:'sailor',music:false,sound:false,haptics:false})));
   await page.reload();await page.locator('#stages option').first().waitFor({state:'attached'});
-  for(let stage=0;stage<3;stage++) {
+  for(let stage=0;stage<STAGES.length;stage++) {
     if(stage===0) await page.locator('#play').click(); else await page.locator('#next-stage').click();
     await page.evaluate(inputs=>{
       const start=performance.now();let index=0;
@@ -50,7 +51,7 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]].filter(([na
     assert.deepEqual(errors, [], 'no input or gameplay exceptions');
     const title=await page.locator('#result-title').textContent();
     assert.ok(await page.locator('#result-dialog').isVisible(),`stage ${stage} finished`);
-    assert.ok(title.includes(stage===2?'Alle Küken':'Willkommen'),`${name} stage ${stage}: ${title}`);
+    assert.ok(title.includes(stage===STAGES.length-1?'Alle Küken':'Willkommen'),`${name} stage ${stage}: ${title}`);
     const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('pelican-v1')));
     assert.equal(saved.completed,stage+1);assert.equal(saved.record,987);assert.ok(saved.bests[stage]>0); assert.equal(saved.difficulty,undefined);
     const fish=Number(await page.locator('#result-fish').textContent());
@@ -66,16 +67,16 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]].filter(([na
   await page.locator('#again').click();assert.equal(await page.locator('#score').textContent(),'0');
   await page.keyboard.down('Space');await page.clock.runFor(WORLD.breath * 1000 + 1100);await page.keyboard.up('Space');
   assert.equal(await page.locator('#result-title').textContent(),'Die Luft ist aus!');
-  await page.locator('#back-home').click();assert.equal(await page.locator('#stages').inputValue(),'2');
+  await page.locator('#back-home').click();assert.equal(await page.locator('#stages').inputValue(),String(STAGES.length-1));
   await page.locator('#stages').selectOption('0');await page.locator('#play').click();assert.equal(await page.locator('#score').textContent(),'0');
   await page.locator('#pause').click();await page.locator('#quit').click();
-  await page.reload();await page.locator('#stages option').first().waitFor({state:'attached'});assert.equal(await page.locator('#stages').inputValue(),'2');
+  await page.reload();await page.locator('#stages option').first().waitFor({state:'attached'});assert.equal(await page.locator('#stages').inputValue(),String(STAGES.length-1));
   await page.evaluate(()=>navigator.serviceWorker.ready);
   // WebKit's setOffline aborts before service-worker navigation. Stop the origin
   // in both engines instead; no-store responses rule out ordinary HTTP cache.
   await server.close();await assert.rejects(context.request.get(url,{timeout:1000}));
   if(name==='chromium')await context.setOffline(true);
  await page.reload();await page.locator('#stages option').first().waitFor({state:'attached'});
-  assert.equal(await page.locator('#stages').inputValue(),'2');await page.locator('#play').click();await page.clock.runFor(500);assert.ok(await page.locator('#hud').isVisible());
-  assert.deepEqual(errors,[]);await browser.close();console.log(`${name}: all three real-input stages, bank, replay, reload and offline passed`);
+  assert.equal(await page.locator('#stages').inputValue(),String(STAGES.length-1));await page.locator('#play').click();await page.clock.runFor(500);assert.ok(await page.locator('#hud').isVisible());
+  assert.deepEqual(errors,[]);await browser.close();console.log(`${name}: all four real-input stages, bank, replay, reload and offline passed`);
 }

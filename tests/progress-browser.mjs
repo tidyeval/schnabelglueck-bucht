@@ -9,7 +9,7 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
     const stale = await context.newPage(); await stale.goto(url); await stale.locator('#settings').click();
     const active = await context.newPage(); await active.clock.install(); await active.goto(url);
     await active.locator('#play').click();
-    await active.keyboard.down('Space'); await active.clock.runFor(1100); await active.keyboard.up('Space'); await active.clock.runFor(600);
+    await active.keyboard.down('Space'); await active.clock.runFor(1400); await active.keyboard.up('Space'); await active.clock.runFor(1150);
     await active.locator('#pause').click(); await active.locator('#quit').click();
     const banked = await active.evaluate(() => JSON.parse(localStorage.getItem('pelican-v1')));
     assert.ok(banked.totalFish > 0 && banked.bests[0] > 0);
@@ -19,7 +19,7 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
 
     const pages = await Promise.all([0, 1].map(async () => {
       const page = await context.newPage(); await page.clock.install(); await page.goto(url); await page.locator('#play').click();
-      await page.keyboard.down('Space'); await page.clock.runFor(1100); await page.keyboard.up('Space'); await page.clock.runFor(600);
+      await page.keyboard.down('Space'); await page.clock.runFor(1400); await page.keyboard.up('Space'); await page.clock.runFor(1150);
       return page;
     }));
     await Promise.all(pages.map(async page => { await page.locator('#pause').click(); await page.locator('#quit').click(); }));

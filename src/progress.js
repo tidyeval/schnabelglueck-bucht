@@ -1,4 +1,4 @@
-import { STAGES } from './game.js';
+import { STAGES } from './stages.js';
 import { localeFrom } from './i18n.js';
 export const unlocks = { classic: 0, flower: 25, sailor: 80 };
 const count = value => Number.isSafeInteger(value) && value >= 0 ? value : 0;

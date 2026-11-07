@@ -1,30 +1,20 @@
+import { STAGES } from './stages.js';
 import './style.css';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
-import { createGame, step, press, WORLD, STAGES, airState } from './game.js';
+import { createGame, step, press, WORLD, airState } from './game.js';
 import { drawWorld } from './art.js';
 import { createAudio } from './audio.js';
 import { createJuice } from './juice.js';
-import { readProgress, recordAttempt, attemptFromGame, applyAttempt } from './progress.js';
+import { recordAttempt, attemptFromGame } from './progress.js';
+import { restoreProgress, readStoredProgress, saveSetting, saveAttempt, isProgressKey } from './storage.js';
+import { setupPwa } from './pwa.js';
 import { applyTranslations, currentLocale, formatNumber, setLocale, stageName, t } from './i18n.js';
 
 const $ = id => document.getElementById(id);
 const app = $('app'), canvas = $('world'), ctx = canvas.getContext('2d');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const STORAGE_KEY = 'pelican-v1', ATTEMPT_PREFIX = `${STORAGE_KEY}-attempt:`;
-function storedProgress() {
-  const progress = readProgress(localStorage.getItem(STORAGE_KEY));
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (!key?.startsWith(ATTEMPT_PREFIX)) continue;
-    try { applyAttempt(progress, JSON.parse(localStorage.getItem(key))); } catch { /* Ignore malformed ledger entries. */ }
-  }
-  return progress;
-}
-let initial;
-try { initial = storedProgress(); } catch { initial = readProgress(); }
-const prefs = initial;
-try { localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs)); } catch { /* A later explicit save will report failure. */ }
+const prefs = restoreProgress();
 let selectedStage = Math.min(prefs.completed, STAGES.length - 1);
 const audio = createAudio(prefs);
 const juice = createJuice(reducedMotion);
@@ -35,15 +25,12 @@ function text(id, value) { if ($(id).textContent !== String(value)) $(id).textCo
 function syncPrefs(latest) { Object.assign(prefs, latest); }
 function persistSettings(key) {
   try {
-    const latest = storedProgress(); latest[key] = prefs[key];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(latest)); syncPrefs(latest); return true;
+    syncPrefs(saveSetting(key, prefs[key])); return true;
   } catch { toast(t('settingsSaveFailed')); return false; }
 }
 function persistAttempt(attempt) {
   try {
-    localStorage.setItem(ATTEMPT_PREFIX + attempt.id, JSON.stringify(attempt));
-    const latest = storedProgress();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(latest)); syncPrefs(latest); return true;
+    syncPrefs(saveAttempt(attempt)); return true;
   } catch { return false; }
 }
 function toast(message) { text('toast', message); $('toast').classList.remove('hidden'); toastUntil = performance.now() + 3000; }
@@ -78,7 +65,7 @@ document.querySelectorAll('[data-locale]').forEach(button => button.onclick = ()
 
 function closeDialogs() { document.querySelectorAll('dialog[open]').forEach(d => d.close()); }
 function start(elapsed) {
-  closeDialogs(); game = createGame(Math.random, selectedStage, elapsed); document.body.classList.toggle('night', game.stage === 3); game.attemptId = crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`; effects = []; juice.reset(); mode = 'playing'; holding = false;
+  closeDialogs(); game = createGame(Math.random, selectedStage, elapsed); document.body.classList.toggle('night', STAGES[game.stage].night); game.attemptId = crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`; effects = []; juice.reset(); mode = 'playing'; holding = false;
   $('start').classList.add('hidden'); $('hud').classList.remove('hidden'); $('pause').classList.remove('hidden');
   $('toast').classList.add('hidden'); audio.start(); updateHud(); canvas.focus();
 }
@@ -101,7 +88,7 @@ function finish() {
   const final = complete && game.stage === STAGES.length - 1;
   $('next-stage').classList.toggle('hidden', !complete || final);
   text('again', t('again'));
-  mode = 'ended'; holding = false; game.ended = true;
+  mode = 'ended'; holding = false;
   const saved = persistAttempt(attempt); $('retry-save').classList.toggle('hidden', saved);
   text('result-kicker', complete ? (final ? t('allNests') : t('nestReached')) : record ? t('newRecord') : stageName(game.stage));
   text('result-title', game.endReason === 'complete' && final ? t('reasons.final') : t(`reasons.${game.endReason}`) || t('reasons.fallback'));
@@ -147,8 +134,8 @@ $('retry-save').onclick = () => {
   text('result-mission', `${message} ${t('saved')}`);
 };
 window.addEventListener('storage', event => {
-  if (event.key !== STORAGE_KEY && !event.key?.startsWith(ATTEMPT_PREFIX)) return;
-  try { syncPrefs(storedProgress()); refreshLocale(); } catch { /* Keep the current in-memory state. */ }
+  if (!isProgressKey(event.key)) return;
+  try { syncPrefs(readStoredProgress()); refreshLocale(); } catch { /* Keep the current in-memory state. */ }
 });
 $('pause-dialog').addEventListener('cancel', event => { event.preventDefault(); resume(); });
 $('settings-dialog').addEventListener('cancel', event => { event.preventDefault(); afterSettings(); });
@@ -190,14 +177,11 @@ function resize() {
 window.addEventListener('resize', resize); resize(); refreshLocale();
 // Autoplay where allowed; the gesture listeners resume a suspended mobile context.
 audio.start('menu');
+const applyPendingUpdate = setupPwa(toast);
 function frame(now) {
   const dt = Math.min(.05, Math.max(0, (now - (last || now)) / 1000)); last = now;
   if (mode === 'playing' || mode === 'menu') animation += dt;
-  // Apply a downloaded update on its own, but only while nobody is mid-round.
-  if (mode === 'menu' && !applyingUpdate && !document.querySelector('dialog[open]')) {
-    if (registration?.waiting) { applyingUpdate = true; registration.waiting.postMessage({ type: 'SKIP_WAITING' }); }
-    else if (reloadReady) { applyingUpdate = true; location.reload(); }
-  }
+  if (mode === 'menu' && !document.querySelector('dialog[open]')) applyPendingUpdate();
   if (mode === 'playing') {
     const wasFeeding = game.feeding > 0;
     for (const event of step(game, dt * juice.timeScale(dt), holding)) {
@@ -222,55 +206,3 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-let installPrompt, registration, applyingUpdate = false, reloadReady = false;
-const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-$('install').hidden = Capacitor.isNativePlatform() || standalone();
-window.addEventListener('beforeinstallprompt', event => { event.preventDefault(); installPrompt = event; $('install').hidden = false; });
-window.addEventListener('appinstalled', () => { installPrompt = null; $('install').hidden = true; });
-$('install').onclick = async () => {
-  if (!installPrompt) { $('install-help').showModal(); return; }
-  const prompt = installPrompt; installPrompt = null;
-  try { await prompt.prompt(); } catch { $('install-help').showModal(); }
-};
-$('install-help').querySelector('button').onclick = () => $('install-help').close();
-function updateStatus() {
-  const downloading = Boolean(registration?.installing);
-  $('update').disabled = downloading;
-  text('update', reloadReady || registration?.waiting ? t('updateReady') : downloading ? t('updateLoading') : t('update'));
-}
-$('update').onclick = async () => {
-  if (reloadReady) { location.reload(); return; }
-  if (registration?.waiting) { applyingUpdate = true; registration.waiting.postMessage({ type: 'SKIP_WAITING' }); return; }
-  if (!registration) { toast(t('offlinePreparing')); return; }
-  $('update').disabled = true; text('update', t('updateChecking'));
-  try {
-    await registration.update();
-    // update() finishes the check, not the installation of the downloaded files.
-    if (registration.installing) toast(t('updateLoaded'));
-    else if (registration.waiting) toast(t('updateNow'));
-    else toast(t('upToDate'));
-  } catch { toast(t('updateFailed')); }
-  finally { updateStatus(); }
-};
-if (import.meta.env.PROD && !Capacitor.isNativePlatform() && 'serviceWorker' in navigator) {
-  const hadController = Boolean(navigator.serviceWorker.controller);
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (applyingUpdate) location.reload();
-    else if (hadController) { reloadReady = true; updateStatus(); }
-  });
-  navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, { updateViaCache: 'none' }).then(reg => {
-    registration = reg; $('update').hidden = false;
-    const watchDownload = () => {
-      const worker = reg.installing; updateStatus();
-      worker?.addEventListener('statechange', () => {
-        updateStatus();
-        if (worker.state === 'installed' && reg.waiting) toast(t('updateMenu'));
-        if (worker.state === 'redundant') toast(t('updateUnavailable'));
-      });
-    };
-    watchDownload(); reg.addEventListener('updatefound', watchDownload);
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) reg.update().catch(() => {});
-    });
-  }).catch(() => toast(t('offlineUnavailable')));
-}

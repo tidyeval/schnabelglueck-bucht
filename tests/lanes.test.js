@@ -1,6 +1,7 @@
+import { STAGES } from '../src/stages.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGame, step, STAGES, hitsTerrain, beakPosition } from '../src/game.js';
+import { createGame, step, hitsTerrain, beakPosition } from '../src/game.js';
 
 test('split schools offer two catchable lanes with room above the coral', () => {
   for (const [stage, kind] of [[0, 'turtle'], [1, 'coral']]) {

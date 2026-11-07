@@ -1,6 +1,8 @@
+import { STAGES } from '../src/stages.js';
+const PAIR_PATTERNS = new Map(STAGES.flatMap((stage, index) => Object.entries(stage.pairPatterns).map(([wave, form]) => [`${index}:${wave}`, form])));
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGame, step, WORLD, paceAt, STAGES, hitsTerrain, PAIR_PATTERNS } from '../src/game.js';
+import { createGame, step, WORLD, paceAt, hitsTerrain } from '../src/game.js';
 import { readProgress } from '../src/progress.js';
 import { routeController } from './route-controller.js';
 

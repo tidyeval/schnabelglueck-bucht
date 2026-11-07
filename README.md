@@ -103,7 +103,16 @@ npm run test:localization-browser # Sprachwahl, Persistenz und kleine Bildschirm
 
 Die Modelltests prüfen 18 vollständige Fischrouten (3 Etappen × 2 Ladungen × 3 Frameintervalle), ausschließlich unter Wasser platzierte Fische, parallele Bögen, freie Geländepassagen, zunehmendes Tempo, Einführung vor Kombinationen, Energie, Luft, Gegnerverhalten, Fänge, Tricks, Nestabschluss und Speicherstandmigration. Die Browserprüfung spielt in Chromium und WebKit und prüft Pause, Einstellungen, Neustart und Speicherung sowie in Chromium den Offline-Neustart. Screenshots entstehen unter `test-results/`. `PELICAN_URL` kann die Testadresse überschreiben.
 
-`src/game.js` enthält die Spiellogik, `src/art.js` die Illustration, `src/main.js` Eingabe und Oberfläche und `src/audio.js` Klang und Haptik; `src/progress.js` validiert und verbucht gespeicherte Etappenergebnisse. Die App-Icons sind aus `public/icon.svg` mit `node scripts/icons.mjs` reproduzierbar.
+## Technischer Aufbau
+
+- [`src/stages.js`](src/stages.js) definiert je Etappe Kennung, übersetzte Namen, Begegnungen, Starttempo, Bewohner, besondere Momente und Farben. Die Reihenfolge ist zugleich der Index im bestehenden Speicherformat; eine Umordnung erfordert eine Migration. Darstellungsvarianten verwenden die Kennung statt einer fest eingebauten Etappennummer.
+- [`src/game.js`](src/game.js) besitzt den veränderbaren Spielzustand. `createGame(random, stage, elapsed)` erstellt eine Runde, `press(game)` verarbeitet einen kurzen Tipp und `step(game, dt, holding)` berechnet den nächsten Schritt und liefert Ereignisse. Bewegung, Fütterung, Gegnerverhalten, Fänge und Kollisionen sind intern gegliedert; die Simulation benötigt weder Browser noch Speicher. Die Zustands- und Ereignisverträge stehen als JSDoc am Modul.
+- [`src/art.js`](src/art.js), `src/scenery.js` und `src/cute.js` lesen den Spielzustand und zeichnen ihn. `pelican(context, { x, y, scale, time, … })` erhält benannte Darstellungswerte. Klang und Haptik liegen in `src/audio.js`, Partikel und Zeitlupe in `src/juice.js`.
+- [`src/progress.js`](src/progress.js) validiert und verbucht Ergebnisse; [`src/storage.js`](src/storage.js) liest und schreibt sie. Das Protokoll einzelner Versuche erhält Fortschritt über mehrere Tabs und macht Wiederholungen nach Speicherfehlern sicher. Speicherformat und Migration bleiben erhalten.
+- [`src/pwa.js`](src/pwa.js) besitzt Installation und Updates. `setupPwa(toast)` bindet die Bedienelemente und liefert eine Aktion, die die App nur im Startmenü ohne offenen Dialog aufruft, um ein bereitstehendes Update zu aktivieren.
+- [`src/main.js`](src/main.js) verbindet Eingabe, Oberfläche, Plattformereignisse und Spielschleife. Spielereignisse lösen Darstellung und Audio aus; diese verändern den Simulationszustand nicht.
+
+Die App-Icons sind aus `public/icon.svg` mit `node scripts/icons.mjs` reproduzierbar.
 
 ## Validierung
 

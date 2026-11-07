@@ -47,10 +47,12 @@ try {
   await page.reload(); await page.locator('#play').waitFor();
   deployment = 1;
   await page.locator('#update').click();
+  await page.locator('#settings').click();
   await page.waitForFunction(async () => Boolean((await navigator.serviceWorker.getRegistration()).installing));
   assert.ok(!(await page.locator('#toast').textContent()).includes('Kein neues Update'), 'never claim no update while it is downloading');
-  await page.getByRole('button', { name: 'Update verfügbar · neu laden' }).waitFor();
-  await Promise.all([page.waitForEvent('load'), page.locator('#update').click()]);
+  await page.waitForFunction(() => document.querySelector('#update').textContent === 'Update verfügbar · neu laden');
+  assert.ok(await page.locator('#settings-dialog').isVisible(), 'a pending update waits while a dialog is open');
+  await Promise.all([page.waitForEvent('load'), page.locator('.close-settings').click()]);
   assert.equal(await page.locator('#record').textContent(), '123');
   assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('pelican-v1')).totalFish), 42);
   assert.equal(await page.evaluate(async () => (await (await caches.match(new URL('manifest.webmanifest', location.href))).json()).description), 'Aktualisierte kleine Auszeit am Meer.');
@@ -75,7 +77,7 @@ try {
   assert.ok(await page.locator('#hud').isVisible());
   assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('pelican-v1')).completed), 2);
   await page.context().setOffline(false);
-  console.log('Offline restart preserves unlocked reef');
+  console.log('Offline restart preserves unlocked stage');
   console.log('Stale cached page recovered; records and fish preserved');
-  console.log('Install fallback, install action, scoped cache, real waiting-worker update and preserved records passed');
+  console.log('Install fallback, install action, scoped cache, automatic menu update after dialog close and preserved records passed');
 } finally { await browser.close(); await new Promise(resolve => server.close(resolve)); await rm(fixture, { recursive: true, force: true }); }

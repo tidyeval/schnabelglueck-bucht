@@ -1,3 +1,4 @@
+import { STAGES } from './stages.js';
 // Stage atmosphere, set-piece scenery and game-feel overlays. Everything here is
 // presentation only: nothing in this file is used for collisions or scoring.
 import { WORLD, clamp, sardinePositions, currentSpan } from './game.js';
@@ -5,28 +6,6 @@ import { blink, cuteEye, happyEye, manatee } from './cute.js';
 const TAU = Math.PI * 2;
 const SHOW_TIME = 13;
 
-export const THEMES = [
-  { // Geschützte Bucht: clear morning.
-    sky: [[0, '#a9dbe0'], [.6, '#d9ecd9'], [1, '#f7e9c6']], glow: '#efb68a3d', far: '#9cc7bd', tint: null,
-    water: ['#6fc4b6', '#256068'], surface: '#f8dfad40', rays: '#fbf8c4', rayAlpha: .13, mote: '#e8f3cc35',
-    seabed: '#578c81', grass: ['#6b9d7b', '#3f7e6c'], rocks: '#3f7c78', swell: 1,
-  },
-  { // Fischerhafen: bright, warm afternoon.
-    sky: [[0, '#acdbe0'], [.6, '#f1e7c8'], [1, '#fbdcae']], glow: '#f7b77a55', far: '#a9c4b2', tint: null,
-    water: ['#6fc4b6', '#256068'], surface: '#f8dfad4a', rays: '#fbf2c0', rayAlpha: .13, mote: '#f3eccc35',
-    seabed: '#578c81', grass: ['#6b9d7b', '#3f7e6c'], rocks: '#3f7c78', swell: 1.2,
-  },
-  { // Mangroven-Lagune: warm evening glow over calm, green-gold water.
-    sky: [[0, '#9cc4d4'], [.45, '#f1c9b4'], [.8, '#f7ab8c'], [1, '#ffd29a']], glow: '#ff9e6a66', far: '#7f9e86', tint: 'rgba(255,160,110,.1)',
-    water: ['#79bc9c', '#285c52'], surface: '#ffd09a55', rays: '#ffdcaa', rayAlpha: .12, mote: '#f8e4b035',
-    seabed: '#6b8a64', grass: ['#7aa66a', '#4a7d55'], rocks: '#4a705c', swell: .8,
-  },
-  { // Korallenriff: dusk turning into night, the finale.
-    sky: [[0, '#151b47'], [.5, '#3a3672'], [.85, '#8b5f8c'], [1, '#e09a86']], glow: '#ff9f8a44', far: '#2b2d5e', tint: 'rgba(24,30,78,.62)',
-    water: ['#3b8fa6', '#10294a'], surface: '#cfe0ff3a', rays: '#bcd8ff', rayAlpha: .07, mote: '#bfe9ff30',
-    seabed: '#2f5f73', grass: ['#3f8a86', '#235a66'], rocks: '#173a56', swell: 1.1,
-  },
-];
 
 const wrap = (value, span) => (value % span + span) % span;
 const hash = i => { const s = Math.sin(i * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
@@ -47,12 +26,12 @@ export function showState(game, reducedMotion) {
 // Passing ships and storms make the surface line heave; the collision water line is unchanged.
 export function swellOf(game, stage, reducedMotion) {
   const show = showState(game, reducedMotion);
-  return THEMES[stage].swell + (show && show.name === 'trawler' ? show.envelope * 1.5 : 0);
+  return STAGES[stage].theme.swell + (show && show.name === 'trawler' ? show.envelope * 1.5 : 0);
 }
 
 // Scenery is painted first, tinted in place, and the sky is slipped in behind it.
 export function drawSky(c, stage, water, d, motion, game, reducedMotion, drawScenery) {
-  const th = THEMES[stage];
+  const th = STAGES[stage].theme;
   const show = game ? showState(game, reducedMotion) : null;
   drawScenery();
   if (show?.name === 'trawler') trawler(c, water, show, motion);
@@ -73,7 +52,7 @@ export function drawSky(c, stage, water, d, motion, game, reducedMotion, drawSce
     });
   }
   c.globalAlpha = 1;
-  if (stage === 1) {
+  if (STAGES[stage].id === 'harbor') {
     // Harbour cranes and masts.
     for (let i = 0; i < 4; i++) {
       const x = wrap(i * 190 - d * .045, 760) - 120;
@@ -83,7 +62,7 @@ export function drawSky(c, stage, water, d, motion, game, reducedMotion, drawSce
   }
   if (show?.name === 'rainbow') rainbow(c, water, show);
   // Sun, or moon and stars over the night reef.
-  if (stage === 3) {
+  if (STAGES[stage].id === 'reef') {
     fill(c, '#f6f1d6', p => p.arc(392, 118, 25, 0, TAU));
     fill(c, '#f6f1d622', p => p.arc(392, 118, 44, 0, TAU));
     fill(c, '#f6f1d612', p => p.arc(392, 118, 70, 0, TAU));
@@ -93,7 +72,7 @@ export function drawSky(c, stage, water, d, motion, game, reducedMotion, drawSce
       fill(c, '#fff8e0', p => p.arc(hash(i + 1) * 480, hash(i + 2) * (water - 110), hash(i + 3) > .8 ? 1.6 : 1, 0, TAU));
     }
     c.globalAlpha = 1;
-  } else if (stage === 2) {
+  } else if (STAGES[stage].id === 'lagoon') {
     // A low evening sun.
     fill(c, '#ffc98a', p => p.arc(370, water - 58, 34, 0, TAU));
     fill(c, '#ffd9a066', p => p.arc(370, water - 58, 52, 0, TAU));
@@ -205,11 +184,11 @@ export function drawDolphins(c, game, water, motion, reducedMotion) {
 }
 
 export function drawWater(c, stage, water, d, motion, game, reducedMotion) {
-  const th = THEMES[stage];
+  const th = STAGES[stage].theme;
   c.fillStyle = vertical(c, water, 850, [[0, th.water[0]], [1, th.water[1]]]); c.fillRect(-30, water, 540, 880 - water);
   c.fillStyle = vertical(c, water, water + 110, [[0, th.surface], [1, th.surface.slice(0, 7) + '00']]); c.fillRect(-30, water, 540, 110);
   // Moon path just below the surface.
-  if (stage === 3) {
+  if (STAGES[stage].id === 'reef') {
     for (let k = 0; k < 9; k++) {
       const width = 26 - k * 2.4 + Math.sin(motion * 2.6 + k * 1.7) * 7;
       c.globalAlpha = (.5 - k * .05) * .7;
@@ -233,7 +212,7 @@ export function drawWater(c, stage, water, d, motion, game, reducedMotion) {
     p.lineTo(520, 850); p.closePath();
   });
   c.globalAlpha = 1;
-  if (stage === 1) {
+  if (STAGES[stage].id === 'harbor') {
     // Pier posts fade with depth.
     for (let i = 0; i < 5; i++) {
       const x = wrap(i * 173 - d * .16, 760) - 120;
@@ -244,8 +223,8 @@ export function drawWater(c, stage, water, d, motion, game, reducedMotion) {
     const x = wrap(i * 83.73 - d * .27, 520) - 20, y = water + 25 + (i * 41.4) % (820 - water);
     fill(c, th.mote, p => p.arc(x, y + Math.sin(motion + i) * 4, i % 3 === 0 ? 2 : 1, 0, TAU));
   }
-  if (stage === 3) plankton(c, water, d, motion, game, reducedMotion);
-  if (stage === 2) {
+  if (STAGES[stage].id === 'reef') plankton(c, water, d, motion, game, reducedMotion);
+  if (STAGES[stage].id === 'lagoon') {
     // Sun path on the calm lagoon.
     for (let k = 0; k < 7; k++) {
       c.globalAlpha = .35 - k * .04;
@@ -273,7 +252,7 @@ function plankton(c, water, d, motion, game, reducedMotion) {
 }
 // Bay seabed light net, drawn over the sand.
 export function drawCaustics(c, stage, d, motion, reducedMotion) {
-  if (stage !== 0) return;
+  if (STAGES[stage].id !== 'bay') return;
   c.globalCompositeOperation = 'lighter';
   for (let row = 0; row < 3; row++) {
     stroke(c, `rgba(255,250,200,${.13 - row * .03})`, 2.2 - row * .5, p => {

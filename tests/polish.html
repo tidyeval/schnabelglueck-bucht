@@ -1,8 +1,9 @@
 <!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Schnabelglück · Animationsprüfung</title>
 <style>body{margin:0;background:#fff5df;color:#285652;font:16px system-ui}header{padding:12px;display:flex;gap:12px;flex-wrap:wrap}canvas{display:block;max-width:100%;height:auto;margin:auto;width:390px;height:844px}select,button{font:inherit}label{display:flex;gap:6px;align-items:center}p{max-width:650px;margin:12px auto;padding:0 12px}</style>
-<header><select id="scene" aria-label="Szene"><option>Pip</option><option>Müde</option><option>Stärkung</option><option>Treffer</option><option>Tiere</option><option>Versetztes Paar</option><option>Paralleles Paar</option><option>Menschen</option><option>Fischer-Kollision</option><option>Möwen-Kollision</option><option>Kung-Fu</option><option>Umgebung</option><option>Füttern</option><option>Knappe Luft</option><option>Luftnot</option><option>Kugelfisch</option><option>Bucht</option><option>Hafen</option><option>Riff</option></select><select id="outfit" aria-label="Outfit"><option value="classic">Klassisch</option><option value="flower">Blume</option><option value="sailor">Matrose</option></select><label><input type="checkbox" id="reduced">Reduzierte Bewegung</label><button id="pause">Pause</button><label>Zeit <input id="seek" type="range" min="0" max="12" step=".05" value="0"></label></header>
+<header><select id="scene" aria-label="Szene"><option>Pip</option><option>Müde</option><option>Stärkung</option><option>Treffer</option><option>Tiere</option><option>Versetztes Paar</option><option>Paralleles Paar</option><option>Menschen</option><option>Fischer-Kollision</option><option>Möwen-Kollision</option><option>Kung-Fu</option><option>Umgebung</option><option>Füttern</option><option>Knappe Luft</option><option>Luftnot</option><option>Kugelfisch</option><option>Bucht</option><option>Hafen</option><option>Lagune</option><option>Riff</option></select><select id="outfit" aria-label="Outfit"><option value="classic">Klassisch</option><option value="flower">Blume</option><option value="sailor">Matrose</option></select><label><input type="checkbox" id="reduced">Reduzierte Bewegung</label><button id="pause">Pause</button><label>Zeit <input id="seek" type="range" min="0" max="12" step=".05" value="0"></label></header>
 <p id="description">Reproduzierbare Zustandsvorschau ohne HUD, Klang oder Haptik. Die Regler gehören nur zur Prüfseite.</p><canvas width="480" height="850"></canvas>
 <script type="module">
+const {STAGES}=await import('../src/stages.js');
 const {drawWorld}=await import('../src/art.js');const {createGame,step,beakPosition}=await import('../src/game.js');
 const canvas=document.querySelector('canvas'),c=canvas.getContext('2d');let t=0,last,paused=false;
 const scenes=document.querySelector('#scene'),seek=document.querySelector('#seek');
@@ -15,8 +16,8 @@ function sample(scene,time){
    if(scene==='Treffer'){g.energy=50;p.y=285;g.items=[{kind:'gull',x:p.x,y:285}];step(g,.001,false);}
    return g;
  }
- if(['Bucht','Hafen','Riff'].includes(scene)){
-   g.stage=['Bucht','Hafen','Riff'].indexOf(scene);g.items=g.stage===0?[{kind:'turtle',x:300,y:480,baseY:480}]:g.stage===1?[{kind:'boat',x:340,y:360,cast:time%4}]:[{kind:'reef',x:370},{kind:'jelly',x:290,y:660,phase:.4},{kind:'puffer',x:200,y:640,phase:'puffed',timer:1}];return g;
+ if(['Bucht','Hafen','Lagune','Riff'].includes(scene)){
+   g.stage=STAGES.findIndex(stage => stage.id === {Bucht:'bay',Hafen:'harbor',Lagune:'lagoon',Riff:'reef'}[scene]);g.items=STAGES[g.stage].id==='bay'?[{kind:'turtle',x:300,y:480,baseY:480}]:STAGES[g.stage].id==='harbor'?[{kind:'boat',x:340,y:360,cast:time%4}]:STAGES[g.stage].id==='lagoon'?[{kind:'mangrove',x:370},{kind:'turtle',x:260,y:640,baseY:640}]:[{kind:'reef',x:370},{kind:'jelly',x:290,y:660,phase:.4},{kind:'puffer',x:200,y:640,phase:'puffed',timer:1}];return g;
  }
  if(scene==='Knappe Luft'||scene==='Luftnot'){
    Object.assign(p,{y:710,wet:true,vy:0});g.cargo=20;
@@ -30,7 +31,7 @@ function sample(scene,time){
      step(g,1/60,elapsed<.7);
    }
  }else if(scene==='Kugelfisch'){
-   g.stage=2;const item={kind:'puffer',x:470,y:665,phase:'idle',timer:0};g.items=[item];
+   g.stage=STAGES.findIndex(stage => stage.id==='reef');const item={kind:'puffer',x:470,y:665,phase:'idle',timer:0};g.items=[item];
    for(let elapsed=0;elapsed<Math.min(time,3.8);elapsed+=1/60)step(g,1/60,false);
    item.x=300;g.items=[item];
  }else if(scene==='Füttern'){

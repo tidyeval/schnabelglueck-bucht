@@ -1,7 +1,8 @@
+import { STAGES } from '../src/stages.js';
 import test from 'node:test';
 import { routeController } from './route-controller.js';
 import assert from 'node:assert/strict';
-import { createGame, step, WORLD, netShape, hitsNet, beakPosition, press, hitsBoat, hitsFisher, hitsTerrain, terrainBlocks, STAGES, ENERGY, airState, hitsPuffer, pufferRadius, paceAt, UNDERWATER_BANDS, LEAP, RARE, rollRare } from '../src/game.js';
+import { createGame, step, WORLD, netShape, hitsNet, beakPosition, press, hitsBoat, hitsFisher, hitsTerrain, terrainBlocks, ENERGY, airState, hitsPuffer, pufferRadius, paceAt, UNDERWATER_BANDS, LEAP, RARE, rollRare } from '../src/game.js';
 
 test('Pip dives, catches a school, earns the mission once, and a shark ends the stage', () => {
   const g = createGame(() => .5);
@@ -565,7 +566,7 @@ test('every run meets its stage\'s special moment once, at a random wave in the 
     for (let run = 0; run < 3000; run++) {
       const rare = rollRare(stage, random);
       if (!rare) continue;
-      hits++; assert.equal(rare.name, RARE.moments[stage]);
+      hits++; assert.equal(rare.name, STAGES[stage].rareMoment);
       assert.ok(rare.wave >= 2 && rare.wave < STAGES[stage].encounters.length - 2);
     }
     assert.equal(hits, 3000, `stage ${stage}: ${hits} runs with a moment`);

@@ -1,3 +1,4 @@
+import { STAGES } from './stages.js';
 // Shared cuteness helpers and the small background residents of each stage.
 // Presentation only: residents never collide and never score.
 const TAU = Math.PI * 2;
@@ -27,7 +28,6 @@ export function star(c, x, y, r, colour, rotation = 0) {
 const blush = (c, x, y, r) => ellipse(c, x, y, r, r * .6, '#ff8f9a66');
 
 // Which residents live in each stage. A run picks a few and scatters them (see game.decor).
-export const RESIDENTS = [['crab', 'starfish', 'bottle'], ['crab', 'cat', 'bottle'], ['flamingo', 'mudskipper', 'fiddler', 'manatee'], ['octopus', 'seahorse', 'starfish']];
 
 function crab(c, x, y, t, seed) {
   const step = Math.sin(t * 9), wave = Math.sin(t * 2.2 + seed) > .6 ? Math.sin(t * 14) * .5 : 0;
@@ -182,7 +182,7 @@ export function roofCat(c, x, y, t) {
 export function drawResidents(c, game, stage, water, d, t, reducedMotion) {
   const decor = game.decor;
   if (!decor) return;
-  const night = stage === 3;
+  const night = STAGES[stage].night;
   decor.residents.forEach((kind, i) => {
     if (kind === 'cat') return;
     const span = 1500 + i * 230, x = wrap(decor.offsets[i] - d * .92, span) - 80;

@@ -21,9 +21,9 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
     await page.locator('.close-settings').click();
     await page.locator('#play').click();
     await page.keyboard.down('Space');
-    await page.clock.runFor(1050);
+    await page.clock.runFor(1400);
     await page.keyboard.up('Space');
-    await page.clock.runFor(550);
+    await page.clock.runFor(1150);
     const score = Number(await page.locator('#score').textContent());
     assert.ok(score > 0, 'holding then releasing catches real fish');
     await page.clock.runFor(350); // Finish breaching before the aerial presses.
