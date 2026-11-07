@@ -11,10 +11,10 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
     await active.locator('#play').click();
     await active.keyboard.down('Space'); await active.clock.runFor(1400); await active.keyboard.up('Space'); await active.clock.runFor(1150);
     await active.locator('#pause').click(); await active.locator('#quit').click();
-    const banked = await active.evaluate(() => JSON.parse(localStorage.getItem('pelican-v1')));
+    const banked = await active.evaluate(() => JSON.parse(localStorage.getItem('pelican-bucht-test-v1')));
     assert.ok(banked.totalFish > 0 && banked.bests[0] > 0);
     await stale.locator('#music').uncheck();
-    const afterSetting = await stale.evaluate(() => JSON.parse(localStorage.getItem('pelican-v1')));
+    const afterSetting = await stale.evaluate(() => JSON.parse(localStorage.getItem('pelican-bucht-test-v1')));
     assert.equal(afterSetting.totalFish, banked.totalFish); assert.deepEqual(afterSetting.bests, banked.bests);
 
     const pages = await Promise.all([0, 1].map(async () => {
@@ -26,7 +26,7 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
     const totals = await Promise.all(pages.map(page => page.locator('#result-fish').textContent().then(Number)));
     await Promise.all(pages.map(page => page.close()));
     await active.reload(); await active.locator('#play').waitFor();
-    const combined = await active.evaluate(() => JSON.parse(localStorage.getItem('pelican-v1')));
+    const combined = await active.evaluate(() => JSON.parse(localStorage.getItem('pelican-bucht-test-v1')));
     assert.equal(combined.totalFish, banked.totalFish + totals[0] + totals[1]);
     assert.equal(new Set(combined.attemptIds).size, 3);
 
@@ -45,9 +45,9 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
     await failed.evaluate(() => { window.failWrites = false; }); await failed.locator('#retry-save').click();
     assert.ok((await failed.locator('#result-mission').textContent()).includes('ist gespeichert'));
     assert.ok(await failed.locator('#retry-save').isHidden());
-    const retried = await failed.evaluate(() => JSON.parse(localStorage.getItem('pelican-v1')));
+    const retried = await failed.evaluate(() => JSON.parse(localStorage.getItem('pelican-bucht-test-v1')));
     assert.equal(retried.attemptIds.length, 1); await failed.reload();
-    assert.equal((await failed.evaluate(() => JSON.parse(localStorage.getItem('pelican-v1')))).attemptIds.length, 1);
+    assert.equal((await failed.evaluate(() => JSON.parse(localStorage.getItem('pelican-bucht-test-v1')))).attemptIds.length, 1);
     await failed.close();
     console.log(`${name}: stale settings, three exact attempts, persistent failure and idempotent retry passed`);
   } finally { await browser.close(); }

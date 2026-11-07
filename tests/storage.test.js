@@ -10,7 +10,7 @@ test('a failed snapshot keeps the attempt recoverable and a retry credits it onl
     key: i => [...entries.keys()][i],
     getItem: key => entries.get(key) ?? null,
     setItem(key, value) {
-      if (failSnapshot && key === 'pelican-v1') throw new Error('Storage full');
+      if (failSnapshot && key === 'pelican-bucht-test-v1') throw new Error('Storage full');
       entries.set(key, value);
     },
   };
@@ -33,4 +33,20 @@ test('a failed snapshot keeps the attempt recoverable and a retry credits it onl
   assert.equal(updated.language, 'es');
   assert.equal(updated.music, false);
   assert.deepEqual(updated.attemptIds, ['one', 'two']);
+});
+
+test('the test version does not read or change the original game progress', () => {
+  const original = '{"record":987,"totalFish":99}';
+  const entries = new Map([['pelican-v1', original], ['pelican-v1-attempt:old', '{"id":"old","fish":10}']]);
+  const storage = {
+    get length() { return entries.size; },
+    key: i => [...entries.keys()][i],
+    getItem: key => entries.get(key) ?? null,
+    setItem: (key, value) => entries.set(key, value),
+  };
+  assert.equal(readStoredProgress(storage).totalFish, 0);
+  saveAttempt({ id: 'test', layout: 4, stage: 0, fish: 3, score: 10, endReason: 'energy' }, storage);
+  assert.equal(readStoredProgress(storage).totalFish, 3);
+  assert.equal(entries.get('pelican-v1'), original);
+  assert.equal(entries.get('pelican-v1-attempt:old'), '{"id":"old","fish":10}');
 });

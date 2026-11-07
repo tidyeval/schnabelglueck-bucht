@@ -41,7 +41,7 @@ try {
   await page.locator('#install').click(); assert.equal(await page.evaluate(() => window.installClicked), true);
   await page.evaluate(() => navigator.serviceWorker.ready); await page.reload();
   await page.evaluate(async () => {
-    localStorage.setItem('pelican-v1', JSON.stringify({ record: 123, totalFish: 42, completed: 2, bests: [300, 400, 0] }));
+    localStorage.setItem('pelican-bucht-test-v1', JSON.stringify({ record: 123, totalFish: 42, completed: 2, bests: [300, 400, 0] }));
     const cache = await caches.open('unrelated-site'); await cache.put(location.href, new Response('wrong site'));
   });
   await page.reload(); await page.locator('#play').waitFor();
@@ -54,7 +54,7 @@ try {
   assert.ok(await page.locator('#settings-dialog').isVisible(), 'a pending update waits while a dialog is open');
   await Promise.all([page.waitForEvent('load'), page.locator('.close-settings').click()]);
   assert.equal(await page.locator('#record').textContent(), '123');
-  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('pelican-v1')).totalFish), 42);
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('pelican-bucht-test-v1')).totalFish), 42);
   assert.equal(await page.evaluate(async () => (await (await caches.match(new URL('manifest.webmanifest', location.href))).json()).description), 'Aktualisierte kleine Auszeit am Meer.');
   await page.screenshot({ path: 'test-results/pwa-menu.png' });
   await page.evaluate(async () => {
@@ -66,16 +66,17 @@ try {
   await page.goto(url); await page.getByRole('heading', { name: 'Alte Pelican-Version' }).waitFor();
   await page.goto(url + 'aktualisieren.html'); await page.locator('#refresh').click();
   await page.locator('#play').waitFor();
+  await page.waitForFunction(() => document.querySelector('#record').textContent === '123');
   assert.equal(await page.locator('h1').textContent(), 'Schnabelglück');
   assert.equal(await page.locator('#record').textContent(), '123');
-  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('pelican-v1')).totalFish), 42);
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('pelican-bucht-test-v1')).totalFish), 42);
   await page.evaluate(() => navigator.serviceWorker.ready); await page.reload();
   await page.context().setExtraHTTPHeaders({ 'X-Offline-Probe': 'reopened' });
   await page.context().setOffline(true); await page.reload();
   assert.equal(await page.locator('#stages').inputValue(), '2');
   await page.locator('#play').click();
   assert.ok(await page.locator('#hud').isVisible());
-  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('pelican-v1')).completed), 2);
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('pelican-bucht-test-v1')).completed), 2);
   await page.context().setOffline(false);
   console.log('Offline restart preserves unlocked stage');
   console.log('Stale cached page recovered; records and fish preserved');

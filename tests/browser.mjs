@@ -51,7 +51,7 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
     await page.locator('#quit').click();
     assert.ok(await page.locator('#result-dialog').isVisible());
     assert.ok(Number(await page.locator('#result-combo').textContent()) > 0, 'best series remains in the result');
-    const bank = await page.evaluate(() => JSON.parse(localStorage.getItem('pelican-v1')));
+    const bank = await page.evaluate(() => JSON.parse(localStorage.getItem('pelican-bucht-test-v1')));
     assert.ok(bank.totalFish > 0); assert.ok(bank.bests[0] >= score); assert.equal(bank.music, false);
     await page.locator('#again').click();
     assert.equal(await page.locator('#score').textContent(), '0');

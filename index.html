@@ -10,17 +10,19 @@
   <link rel="icon" type="image/svg+xml" href="%BASE_URL%icon.svg" />
   <link rel="apple-touch-icon" href="%BASE_URL%icon-192.png" />
   <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
-  <title>Schnabelglück</title>
+  <title>Schnabelglück · Bucht-Test</title>
 </head>
 <body>
   <div class="desktop-note" aria-hidden="true"><p data-i18n-html="desktopNote">Ein bisschen Meer.<br>Ein bisschen mehr Glück.</p><span class="edition" data-i18n="edition">DEINE KLEINE AUSZEIT · 01</span></div>
   <main id="app" aria-label="Schnabelglück Spiel" data-i18n-aria-label="app">
     <canvas id="world" width="480" height="850" aria-label="Küstenwelt. Halten oder Leertaste zum Tauchen, loslassen zum Fliegen." data-i18n-aria-label="canvas"></canvas>
+    <div id="phaser-effects" aria-hidden="true"></div>
     <div class="grain" aria-hidden="true"></div>
     <header class="topbar">
       <div class="top-actions"><button id="pause" class="icon-button hidden" aria-label="Spiel pausieren" data-i18n-aria-label="pause">Ⅱ</button><button id="settings" class="icon-button" aria-label="Einstellungen öffnen" data-i18n-aria-label="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="#f7faf0"/><circle cx="15" cy="17" r="3" fill="#f7faf0"/></svg></button></div>
     </header>
     <section id="start" class="screen start-screen">
+      <p class="test-edition">BUCHT-TEST · EIGENER SPIELSTAND</p>
       <div class="intro"><h1 id="game-title">Schnabel<em>glück</em></h1><p data-i18n="tagline">Kleiner Vogel. Großes Abenteuer.</p></div>
       <div class="hero-label"><span data-i18n="hero">Hey, ich bin Pip!</span><svg viewBox="0 0 60 45"><path d="M4 4Q45 0 41 35m-9-9 9 10 8-10"/></svg></div>
       <div class="start-bottom"><div class="record"><span data-i18n="recordLabel">✧ FRÜHERER RUNDENREKORD</span><strong id="record">0</strong><span data-i18n="points">PUNKTE</span></div><label class="stage-picker" for="stages"><select id="stages" aria-label="Etappe wählen" data-i18n-aria-label="stage"></select><small id="stage-best"></small></label><button id="play" class="primary"><span id="play-label">Los gehts!</span> <span class="play-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6M6 6h12v12"/></svg></span></button><div id="language-picker" class="language-picker" role="group" aria-label="Sprache" data-i18n-aria-label="language"><button type="button" data-locale="de" aria-pressed="true" aria-label="Deutsch">🇩🇪</button><button type="button" data-locale="en" aria-pressed="false" aria-label="English">🇬🇧</button><button type="button" data-locale="es" aria-pressed="false" aria-label="Español">🇪🇸</button></div><div class="app-actions"><button id="install" class="quiet-button" hidden data-i18n="install">App installieren</button><button id="update" class="quiet-button" hidden data-i18n="update">Updates prüfen</button></div></div>

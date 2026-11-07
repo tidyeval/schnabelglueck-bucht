@@ -1,6 +1,6 @@
 import { readProgress, applyAttempt } from './progress.js';
 
-const STORAGE_KEY = 'pelican-v1', ATTEMPT_PREFIX = `${STORAGE_KEY}-attempt:`;
+const STORAGE_KEY = 'pelican-bucht-test-v1', ATTEMPT_PREFIX = `${STORAGE_KEY}-attempt:`;
 
 export function isProgressKey(key) {
   return key === STORAGE_KEY || Boolean(key?.startsWith(ATTEMPT_PREFIX));

@@ -37,11 +37,11 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       await page.locator('#play').click();
       assert.equal(await page.locator('#air-label').textContent(), copy.air);
       await page.locator('#pause').click(); await page.locator('#quit').click(); await page.locator('#back-home').click();
-      assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('pelican-v1')).language), locale);
+      assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('pelican-bucht-test-v1')).language), locale);
       await page.reload(); await page.locator('#play').waitFor();
       assert.equal(await page.evaluate(() => document.documentElement.lang), locale, 'locale survives reload');
     }
-    await page.evaluate(() => localStorage.setItem('pelican-v1', JSON.stringify({ language: 'xx' })));
+    await page.evaluate(() => localStorage.setItem('pelican-bucht-test-v1', JSON.stringify({ language: 'xx' })));
     await page.reload(); await page.locator('#play').waitFor();
     assert.equal(await page.evaluate(() => document.documentElement.lang), 'de', 'invalid locale falls back to German');
     await page.locator('[data-locale="es"]').click();

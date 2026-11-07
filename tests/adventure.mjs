@@ -37,7 +37,7 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]].filter(([na
   await context.addInitScript(()=>{Math.random=()=>.99;});
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.clock.install();
   await page.goto(url);await page.locator('#stages option').first().waitFor({state:'attached'});
-  await page.evaluate(()=>localStorage.setItem('pelican-v1',JSON.stringify({record:987,totalFish:100,outfit:'sailor',music:false,sound:false,haptics:false})));
+  await page.evaluate(()=>localStorage.setItem('pelican-bucht-test-v1',JSON.stringify({record:987,totalFish:100,outfit:'sailor',music:false,sound:false,haptics:false})));
   await page.reload();await page.locator('#stages option').first().waitFor({state:'attached'});
   for(let stage=0;stage<STAGES.length;stage++) {
     if(stage===0) await page.locator('#play').click(); else await page.locator('#next-stage').click();
@@ -52,7 +52,7 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]].filter(([na
     const title=await page.locator('#result-title').textContent();
     assert.ok(await page.locator('#result-dialog').isVisible(),`stage ${stage} finished`);
     assert.ok(title.includes(stage===STAGES.length-1?'Alle Küken':'Willkommen'),`${name} stage ${stage}: ${title}`);
-    const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('pelican-v1')));
+    const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('pelican-bucht-test-v1')));
     assert.equal(saved.completed,stage+1);assert.equal(saved.record,987);assert.ok(saved.bests[stage]>0); assert.equal(saved.difficulty,undefined);
     const fish=Number(await page.locator('#result-fish').textContent());
     const previous=stage===0?100:JSON.parse(await page.getAttribute('body','data-bank')).totalFish;
@@ -61,7 +61,7 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]].filter(([na
     await page.screenshot({path:`${out}/${name}-nest-${stage}.png`});
     console.log(`${name}: stage ${stage+1} complete, ${fish} fish banked once`);
     await page.clock.runFor(2000);
-    assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('pelican-v1'))),saved,'ended frames cannot bank twice');
+    assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('pelican-bucht-test-v1'))),saved,'ended frames cannot bank twice');
   }
   assert.ok(await page.locator('#next-stage').isHidden());
   await page.locator('#again').click();assert.equal(await page.locator('#score').textContent(),'0');

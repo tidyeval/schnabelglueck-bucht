@@ -12,7 +12,7 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
     await page.clock.install();
     await page.goto(process.env.PELICAN_URL || 'http://localhost:4173');
     await page.locator('#play').waitFor();
-    await page.evaluate(() => localStorage.setItem('pelican-v1', JSON.stringify({ completed: 2, totalFish: 90, outfit: 'sailor', bests: [123, 456, 789], music: false, sound: false })));
+    await page.evaluate(() => localStorage.setItem('pelican-bucht-test-v1', JSON.stringify({ completed: 2, totalFish: 90, outfit: 'sailor', bests: [123, 456, 789], music: false, sound: false })));
     await page.reload(); await page.locator('#play').waitFor();
     assert.equal(await page.locator('[name=difficulty]').count(), 0);
     assert.equal(await page.locator('#result-difficulty').count(), 0);
@@ -24,7 +24,7 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
     const sailor = await page.locator('#world').evaluate(canvas => canvas.toDataURL());
     await page.locator('[data-locale="en"]').focus(); await page.keyboard.press('Enter');
     await page.clock.runFor(20);
-    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('pelican-v1')).outfit), 'sailor');
+    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('pelican-bucht-test-v1')).outfit), 'sailor');
     assert.equal(await page.locator('#world').evaluate(canvas => canvas.toDataURL()), sailor, 'language changes do not alter the selected outfit');
     await page.screenshot({ path: `${out}/${name}-320.png` });
     const bounds = await page.locator('.start-bottom').boundingBox();
