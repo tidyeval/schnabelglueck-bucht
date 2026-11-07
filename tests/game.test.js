@@ -594,10 +594,13 @@ test('bay fish ease away from Pip while remaining catchable and inside the water
   const g = createGame(() => .5, 0);
   g.nextEncounter = Infinity;
   g.player.y = 500; g.player.wet = true; g.player.vy = 0;
-  const fish = { kind: 'fish', x: 205, y: 525 };
+  const fish = { kind: 'fish', x: 245, y: 525 };
   g.items = [fish];
-  step(g, .05, true);
-  assert.ok(fish.y > 525 && fish.y < 537);
+  for (let i = 0; i < 30; i++) {
+    g.player.y = 500; g.player.wet = true; g.player.vy = 0; fish.x = 245;
+    step(g, 1 / 60, true);
+  }
+  assert.ok(fish.y > 540, 'the reaction is visible within half a second');
   assert.ok(fish.y > WORLD.water && Number.isFinite(fish.heading));
   fish.x = beakPosition(g.player).x + g.speed * .01;
   fish.y = beakPosition(g.player).y;

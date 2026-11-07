@@ -351,7 +351,7 @@ export function createGame(random = Math.random, stage = 0, elapsed) {
       { kind: 'boat', x: 460, y: WORLD.water, cast: -1, hit: false, look: 0 },
       { kind: 'gull', x: 640, y: 285, phase: 0 },
       { kind: 'shark', x: 780, y: 420, baseY: 420, lane: 'upper', encounterForm: 'single', warningTime: 1.15 },
-      ...Array.from({ length: 5 }, (_, i) => ({ kind: 'fish', x: 340 + i * 48, y: 590 + Math.sin(i * .6) * 18, golden: false })),
+      ...Array.from({ length: 5 }, (_, i) => ({ kind: 'fish', x: 340 + i * 48, y: 590 + Math.sin(i * .6) * 18, golden: false, calm: i % 2 === 0 })),
     ],
     frenzy: 0, frenzySpawn: 0, frenzyArmed: true, boost: 0, nearMisses: 0, show: null,
     nextEncounter: 100, wave: 0, boats: 1, lastPairBand: -1, encounterTrace: [], ended: false,
@@ -535,13 +535,15 @@ function updateBoat(game, item, dt, events) {
 
 function updateFish(game, item, dt, beak, events) {
   const p = game.player;
-  if (game.stage === 0 && !item.golden && item.leap === undefined) {
+  if (game.stage === 0 && !item.golden && !item.calm && item.leap === undefined) {
     item.homeY ??= item.y;
     const gap = Math.hypot(item.x - p.x, item.y - p.y);
-    const away = p.wet && gap < 100 ? Math.sign(item.y - p.y || 1) * (1 - gap / 100) * 12 : 0;
+    if (p.wet && gap < 220) item.escapeSide ??= Math.sign(item.y - p.y || 1);
+    else item.escapeSide = undefined;
+    const away = item.escapeSide ? item.escapeSide * (1 - gap / 220) * 75 : 0;
     const target = terrainSafeY(game.items, item.x, item.homeY + away, 12, 0);
     const before = item.y;
-    item.y += (target - item.y) * (1 - Math.exp(-dt * 3));
+    item.y += (target - item.y) * (1 - Math.exp(-dt * 5));
     item.heading = clamp((item.y - before) / Math.max(dt, .001) / 220, -.2, .2);
   }
   if (item.leap !== undefined && (item.leap > 0 || item.x < LEAP.at) && item.leap < LEAP.duration) {
