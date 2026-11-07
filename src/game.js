@@ -535,6 +535,15 @@ function updateBoat(game, item, dt, events) {
 
 function updateFish(game, item, dt, beak, events) {
   const p = game.player;
+  if (game.stage === 0 && !item.golden && item.leap === undefined) {
+    item.homeY ??= item.y;
+    const gap = Math.hypot(item.x - p.x, item.y - p.y);
+    const away = p.wet && gap < 100 ? Math.sign(item.y - p.y || 1) * (1 - gap / 100) * 12 : 0;
+    const target = terrainSafeY(game.items, item.x, item.homeY + away, 12, 0);
+    const before = item.y;
+    item.y += (target - item.y) * (1 - Math.exp(-dt * 3));
+    item.heading = clamp((item.y - before) / Math.max(dt, .001) / 220, -.2, .2);
+  }
   if (item.leap !== undefined && (item.leap > 0 || item.x < LEAP.at) && item.leap < LEAP.duration) {
     const clear = !item.leap && game.items.some(other => TERRAIN.includes(other.kind) && Math.abs(other.x - item.x) < 260);
     if (clear) item.leap = undefined;

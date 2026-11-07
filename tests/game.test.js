@@ -589,3 +589,18 @@ test('a fish snapped out of the air scores double', () => {
   step(g, 1 / 60, false);
   assert.equal(g.score, 30, 'a plain catch in the air is not doubled');
 });
+
+test('bay fish ease away from Pip while remaining catchable and inside the water', () => {
+  const g = createGame(() => .5, 0);
+  g.nextEncounter = Infinity;
+  g.player.y = 500; g.player.wet = true; g.player.vy = 0;
+  const fish = { kind: 'fish', x: 205, y: 525 };
+  g.items = [fish];
+  step(g, .05, true);
+  assert.ok(fish.y > 525 && fish.y < 537);
+  assert.ok(fish.y > WORLD.water && Number.isFinite(fish.heading));
+  fish.x = beakPosition(g.player).x + g.speed * .01;
+  fish.y = beakPosition(g.player).y;
+  step(g, .01, true);
+  assert.equal(g.fish, 1);
+});

@@ -21,7 +21,7 @@ const audio = createAudio(prefs);
 const juice = createJuice(reducedMotion);
 const showLabels = { dolphins: 'showDolphins', goldenHour: 'showGoldenHour', shootingStars: 'showShootingStars' };
 const labels = { airCatch: ['fxAirCatch', '#fff2b6', true], nearMiss: ['fxNearMiss', '#ffffff'], frenzy: ['fxFrenzy', '#ffd66e', true], feast: ['fxFeast', '#e3f6ff', true], current: ['fxCurrent', '#dffff6'] };
-let phaserScene;
+let phaserScene, cameraAhead = 0;
 let game = createGame(), mode = 'menu', holding = false, effects = [], last = 0, animation = 0, toastUntil = 0, needsDraw = true;
 function text(id, value) { if ($(id).textContent !== String(value)) $(id).textContent = value; }
 function syncPrefs(latest) { Object.assign(prefs, latest); }
@@ -67,7 +67,7 @@ document.querySelectorAll('[data-locale]').forEach(button => button.onclick = ()
 
 function closeDialogs() { document.querySelectorAll('dialog[open]').forEach(d => d.close()); }
 function start(elapsed) {
-  closeDialogs(); game = createGame(Math.random, selectedStage, elapsed); document.body.classList.toggle('night', STAGES[game.stage].night); game.attemptId = crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`; effects = []; juice.reset(); mode = 'playing'; holding = false;
+  closeDialogs(); cameraAhead = 0; game = createGame(Math.random, selectedStage, elapsed); document.body.classList.toggle('night', STAGES[game.stage].night); game.attemptId = crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`; effects = []; juice.reset(); mode = 'playing'; holding = false;
   $('start').classList.add('hidden'); $('hud').classList.remove('hidden'); $('pause').classList.remove('hidden');
   $('toast').classList.add('hidden'); audio.start(); updateHud(); canvas.focus();
 }
@@ -203,7 +203,13 @@ function frame(now) {
   if (now > toastUntil) $('toast').classList.add('hidden');
   audio.update(animation);
   if (mode !== 'paused' || needsDraw) {
+    const obstacle = mode === 'playing' && game.stage === 0 && !reducedMotion && game.items.some(item => ['island', 'buoy', 'reef'].includes(item.kind) && item.x > 300 && item.x < 750);
+    if (mode !== 'paused') cameraAhead += ((obstacle ? 18 : 0) - cameraAhead) * (1 - Math.exp(-dt * 2.5));
+    if (mode === 'menu') cameraAhead = 0;
+    phaserScene?.cameras.main.setScroll(cameraAhead, 0);
+    ctx.save(); ctx.translate(-cameraAhead, 0);
     drawWorld(ctx, game, mode, reducedMotion && mode === 'menu' ? 0 : animation, prefs.outfit, effects, reducedMotion, juice.view());
+    ctx.restore();
     needsDraw = false;
   }
 }

@@ -18,7 +18,7 @@ for (const engine of [chromium, webkit]) {
     assert.equal(new URL(manifest.scope, manifestURL).href, url);
     for (const icon of manifest.icons) assert.ok((await context.request.get(new URL(icon.src, manifestURL).href)).ok());
     await page.locator('#play').click();
-    await page.keyboard.down('Space'); await page.clock.runFor(1050);
+    await page.keyboard.down('Space'); await page.clock.runFor(2500);
     await page.keyboard.up('Space'); await page.clock.runFor(550);
     assert.ok(Number(await page.locator('#score').textContent()) > 0);
     if (engine === chromium) {

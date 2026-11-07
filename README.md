@@ -1,6 +1,6 @@
 # Schnabelglück · Bucht-Test
 
-**Zwischenstand:** Separate Testversion für den Phaser-Umbau. Eigene Installation, eigener Service Worker und eigener Spielstand; die öffentliche Originalversion bleibt unverändert. Der Umbau und die Übernahme der Playground-Ideen sind noch nicht abgeschlossen.
+**Zwischenstand:** Separate Testversion für den Phaser-Umbau. Eigene Installation, eigener Service Worker und eigener Spielstand; die öffentliche Originalversion bleibt unverändert. Phaser steuert die Szene; Blasen beim Fang, eine dezente Reaktion der Fische und ein Kameravorlauf vor Hindernissen sind in der Bucht enthalten. Der Umbau und die Übernahme der Playground-Ideen sind noch nicht abgeschlossen.
 
 
 [Jetzt spielen](https://tidyeval.github.io/schnabel-voll-glueck/)
