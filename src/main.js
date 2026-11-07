@@ -1,4 +1,3 @@
-import Phaser from 'phaser';
 import { STAGES } from './stages.js';
 import './style.css';
 import { Capacitor } from '@capacitor/core';
@@ -78,10 +77,10 @@ function home() {
 }
 function pause(showDialog = true) {
   if (mode !== 'playing') return;
-  mode = 'paused'; holding = false; audio.pause(); phaserScene?.bubbles.pause();
+  mode = 'paused'; holding = false; audio.pause(); phaserScene?.bubbles?.pause();
   if (showDialog) $('pause-dialog').showModal();
 }
-function resume() { phaserScene?.bubbles.resume(); closeDialogs(); holding = false; mode = 'playing'; last = performance.now(); audio.start(game.feeding || game.settling ? 'menu' : 'playing'); canvas.focus(); }
+function resume() { phaserScene?.bubbles?.resume(); closeDialogs(); holding = false; mode = 'playing'; last = performance.now(); audio.start(game.feeding || game.settling ? 'menu' : 'playing'); canvas.focus(); }
 function finish() {
   if (mode === 'ended') return;
   const record = game.score > prefs.bests[game.stage];
@@ -189,7 +188,7 @@ function frame(now) {
     for (const event of step(game, dt * juice.timeScale(dt), holding)) {
       if (event.kind === 'end') { finish(); break; }
       juice.onEvent(event, game);
-      if (event.kind === 'catch' && !reducedMotion) phaserScene?.bubbles.explode(5, event.x, event.y);
+      if (event.kind === 'catch' && !reducedMotion) phaserScene?.bubbles?.explode(5, event.x, event.y);
       const label = labels[event.kind];
       if (event.x !== undefined && !['warning', 'sardine'].includes(event.kind)) effects.push({ ...event, life: label ? 1.3 : 1, label: label && t(label[0], { points: event.points }), colour: label?.[1], big: label?.[2] });
       if (event.kind === 'show' && showLabels[event.name]) toast(t(showLabels[event.name]));
@@ -206,14 +205,17 @@ function frame(now) {
     const obstacle = mode === 'playing' && game.stage === 0 && !reducedMotion && game.items.some(item => ['island', 'buoy', 'reef'].includes(item.kind) && item.x > 300 && item.x < 750);
     if (mode !== 'paused') cameraAhead += ((obstacle ? 18 : 0) - cameraAhead) * (1 - Math.exp(-dt * 2.5));
     if (mode === 'menu') cameraAhead = 0;
-    phaserScene?.cameras.main.setScroll(cameraAhead, 0);
+    phaserScene?.cameras?.main?.setScroll(cameraAhead, 0);
     ctx.save(); ctx.translate(-cameraAhead, 0);
     drawWorld(ctx, game, mode, reducedMotion && mode === 'menu' ? 0 : animation, prefs.outfit, effects, reducedMotion, juice.view());
     ctx.restore();
     needsDraw = false;
   }
+  requestAnimationFrame(frame);
 }
-new Phaser.Game({
+requestAnimationFrame(frame);
+
+import('phaser').then(({ default: Phaser }) => new Phaser.Game({
   type: Phaser.AUTO, parent: 'phaser-effects', width: WORLD.width, height: WORLD.height, transparent: true,
   audio: { noAudio: true },
   scene: {
@@ -222,7 +224,9 @@ new Phaser.Game({
       const texture = this.textures.createCanvas('bubble', 12, 12), c = texture.context;
       c.strokeStyle = '#efffe8'; c.lineWidth = 1.5; c.beginPath(); c.arc(6, 6, 4, 0, Math.PI * 2); c.stroke(); texture.refresh();
       this.bubbles = this.add.particles(0, 0, 'bubble', { speed: { min: 18, max: 70 }, angle: { min: 190, max: 350 }, gravityY: -35, lifespan: 550, alpha: { start: .9, end: 0 }, scale: { start: 1, end: .3 }, emitting: false });
-    },
-    update(now) { frame(now); }
+    }
   }
+})).catch(error => {
+  console.error('Phaser effects could not start:', error);
+  toast('Zusätzliche Effekte konnten nicht geladen werden. Das Spiel bleibt spielbar.');
 });
